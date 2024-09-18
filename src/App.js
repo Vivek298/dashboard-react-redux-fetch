@@ -1,16 +1,16 @@
-// src/App.js
 import React from 'react';
+import { Provider } from 'react-redux';
 import Dashboard from './components/Dashboard';
+import store from './store';
 
 function App() {
-    return (
-        <div className="bg-gray-100 min-h-screen">
-            <div className="container mx-auto p-4">
-                <h1 className="text-3xl font-bold mb-4">User Dashboard</h1>
-                <Dashboard />
-            </div>
-        </div>
-    );
+  return (
+    <Provider store={store}>
+      <div className="App">
+        <Dashboard />
+      </div>
+    </Provider>
+  );
 }
 
 export default App;

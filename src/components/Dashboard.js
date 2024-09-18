@@ -1,78 +1,61 @@
-// src/components/Dashboard.js
 import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchUsers, addUser, updateUser } from '../userSlice';
 import UserCard from './UserCard';
 
 const Dashboard = () => {
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [formData, setFormData] = useState({
-        first_name: '',
-        last_name: '',
-        email: '',
+        name: '',
+        job: '',
     });
 
-    // Fetch user data from the API
+    const dispatch = useDispatch();
+    const { users, loading } = useSelector((state) => state.users);
+
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const response = await fetch('https://reqres.in/api/users?page=2');
-                const data = await response.json();
-                setUsers(data.data); // `data.data` contains the user array
-            } catch (error) {
-                console.error("Error fetching users:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
+        dispatch(fetchUsers());
+    }, [dispatch]);
 
-        fetchUsers();
-    }, []);
-
-    // Handle form input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     };
 
-    // Open the modal for adding a new user
     const handleAddUser = () => {
-        setEditingUser(null); // Set editingUser to null for adding a new user
+        setEditingUser(null);
         setFormData({
-            first_name: '',
-            last_name: '',
-            email: '',
+            name: '',
+            job: '',
         });
         setIsModalOpen(true);
     };
 
-    // Open the modal for editing an existing user
     const handleEditUser = (user) => {
         setEditingUser(user);
-        setFormData(user);
+        setFormData({
+            name: user.name,
+            job: user.job,
+        });
         setIsModalOpen(true);
     };
 
-    // Handle form submission (both adding and editing users)
-    const handleFormSubmit = (e) => {
+    const handleFormSubmit = async (e) => {
         e.preventDefault();
         if (editingUser) {
-            // Update existing user
-            setUsers(users.map(user => user.id === editingUser.id ? { ...editingUser, ...formData } : user));
+            dispatch(updateUser({ id: editingUser.id, ...formData }));
         } else {
-            // Add new user
-            const newUser = {
-                id: users.length + 1,
-                ...formData
-            };
-            setUsers([...users, newUser]);
+            const resultAction = await dispatch(addUser(formData));
+            if (addUser.fulfilled.match(resultAction)) {
+                const newUser = resultAction.payload;
+                dispatch(updateUser(newUser));
+            }
         }
         setIsModalOpen(false);
         setEditingUser(null);
     };
 
-    // Close the modal
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setEditingUser(null);
@@ -99,7 +82,6 @@ const Dashboard = () => {
                 </div>
             )}
 
-            {/* Modal for adding/editing a user */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                     <div className="bg-white p-6 rounded shadow-lg">
@@ -108,34 +90,23 @@ const Dashboard = () => {
                         </h2>
                         <form onSubmit={handleFormSubmit}>
                             <div className="mb-4">
-                                <label className="block text-gray-700 mb-2">First Name</label>
+                                <label className="block text-gray-700 mb-2">Name</label>
                                 <input
                                     className="border p-2 w-full"
                                     type="text"
-                                    name="first_name"
-                                    value={formData.first_name}
+                                    name="name"
+                                    value={formData.name}
                                     onChange={handleInputChange}
                                     required
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-gray-700 mb-2">Last Name</label>
+                                <label className="block text-gray-700 mb-2">Job</label>
                                 <input
                                     className="border p-2 w-full"
                                     type="text"
-                                    name="last_name"
-                                    value={formData.last_name}
-                                    onChange={handleInputChange}
-                                    required
-                                />
-                            </div>
-                            <div className="mb-4">
-                                <label className="block text-gray-700 mb-2">Email</label>
-                                <input
-                                    className="border p-2 w-full"
-                                    type="email"
-                                    name="email"
-                                    value={formData.email}
+                                    name="job"
+                                    value={formData.job}
                                     onChange={handleInputChange}
                                     required
                                 />
